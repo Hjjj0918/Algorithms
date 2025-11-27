@@ -1,0 +1,88 @@
+\documentclass[UTF8]{ctexart}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% 代码格式设置
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    backgroundcolor=\color{lightgray!20},
+    frame=single
+}
+
+\title{\textbf{插入排序 (Insertion Sort)}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{算法思想}
+插入排序的基本思想是：维护一个已排序的序列（初始时只包含输入序列的第一个元素）。每一步从待排序序列中取出一个元素，将它插入到已排序序列的适当位置，使之仍然保持有序。
+
+\section{示例}
+初始序列：
+\begin{center}
+$[34,\;8,\;64,\;51,\;32,\;21]$
+\end{center}
+
+按步骤插入：
+\begin{itemize}
+  \item 第1次插入（将 8 插入到 34 之前）：$[8,\;34,\;64,\;51,\;32,\;21]$（swap）
+  \item 第2次插入（64 已在正确位置）：$[8,\;34,\;64,\;51,\;32,\;21]$（no swap）
+  \item 第3次插入（将 51 插入到 34 和 64 之间）：$[8,\;34,\;51,\;64,\;32,\;21]$（swap）
+  \item 第4次插入（将 32 插入合适位置）：$[8,\;34,\;51,\;32,\;64,\;21]\to[8,\;34,\;32,\;51,\;64,\;21]\to[8,\;32,\;34,\;51,\;64,\;21]$（连续 swap）
+  \item 第5次插入（将 21 插入合适位置）：最终 $[8,\;21,\;32,\;34,\;51,\;64]$
+\end{itemize}
+
+上述过程展示了在第 $k$ 次迭代时，将一个元素插入到长度为 $k$ 的已排序列表中，最坏情况需要 $k$ 次比较和移位。
+
+\section{伪代码}
+\begin{lstlisting}
+InsertionSort(A)
+for (i = 2; i <= n; i++) {
+    j = i - 1;
+    while (j >= 1 && A[j] > A[j+1]) {
+        Swap(A[j], A[j+1]);
+        j = j - 1;
+    }
+}
+\end{lstlisting}
+
+\section{复杂度分析}
+在第 $k$ 次迭代中，将一个元素插入到已排序的 $k$ 个元素中，最坏情况需要进行 $k$ 次比较与移动。因此，总的比较/移动次数在最坏情况为：
+\[
+\sum_{k=1}^{n-1} k = \frac{n(n-1)}{2} = \Theta(n^2).
+\]
+
+\subsection{最坏情况}
+当输入序列按降序排列时，插入排序每次插入都需要移动到最前面，总比较/移动次数为 $\Theta(n^2)$。
+
+\subsection{平均情况}
+平均情况下比较次数仍为 $\Theta(n^2)$（可通过倒置数分析得到）。
+
+\subsection{最好情况}
+当输入序列已按非降序排列时，每次插入不需要移动，比较次数为 $n-1$，因此最好情况为 $\Theta(n)$。
+
+\section{倒置论证（与冒泡排序类似）}
+对于仅交换相邻元素的排序算法，采用倒置（inversion）概念可以得到平均下界。定义：若 $i<j$ 且 $A[i]>A[j]$，则称该对 $(i,j)$ 为一个倒置。每次交换相邻元素至多消除一个倒置，因此任何仅通过相邻交换进行排序的算法，其交换次数至少等于输入中的倒置数。
+
+在所有 $n!$ 个排列的均匀分布下，任意一对元素在排列中构成倒置的概率为 $1/2$，因此期望倒置数为 $\binom{n}{2}/2 = n(n-1)/4$。由此可知，基于相邻交换的排序算法（例如插入排序、冒泡排序）在平均情况下需要 $\Omega(n^2)$ 次交换与比较，也因此平均时间复杂度为 $\Theta(n^2)$。
+
+\section{总结}
+插入排序实现简单、稳定，且对接近有序的数据非常高效（接近线性时间）。但在一般随机输入或最坏情况下，时间复杂度为 $\Theta(n^2)$，因而不适合大型数据集的排序任务。
+
+\end{document}
