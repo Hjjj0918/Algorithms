@@ -1,0 +1,270 @@
+\documentclass[UTF8]{ctexart}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% 代码格式设置
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    backgroundcolor=\color{lightgray!20},
+    frame=single
+}
+
+\title{\textbf{二分查找 (Binary Search)}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{引言}
+
+\subsection{问题回顾}
+在跳跃搜索中，我们提出了一个问题：为了在最坏情况下消除最大的列表段（即无论多么不幸都能消除大段），我们应该选择什么样的策略？
+
+\subsection{答案}
+\textbf{选择中间元素进行比较。}
+
+无论比较结果如何，我们都能消除列表的\textbf{一半}。通过递归地应用这个策略到剩余的段，直到找到目标元素或段缩小为一个元素为止——这就是\textbf{二分查找}。
+
+\section{算法思想}
+
+二分查找（Binary Search）是一种高效的搜索算法，适用于\textbf{有序数组}。其核心思想是：
+\begin{enumerate}
+  \item 比较目标元素 $X$ 与中间位置的元素
+  \item 根据比较结果，决定在左半部分还是右半部分继续搜索
+  \item 重复此过程，每次消除一半的搜索空间
+\end{enumerate}
+
+\section{伪代码}
+
+\begin{lstlisting}
+BinarySearch(L, low, high, X)
+/* 考虑的段为 L[low, high] */
+while (high >= low) {
+    mid = floor((low + high) / 2)
+    case L[mid] {
+        < X: low = mid + 1;      /* 目标在右半部分 */
+        = X: return(mid);         /* 找到目标 */
+        > X: high = mid - 1;      /* 目标在左半部分 */
+    }
+return ("not found!")             /* 搜索失败 */
+\end{lstlisting}
+
+\section{最坏情况复杂度分析}
+
+\subsection{递推关系}
+设 $f(n)$ 为二分查找在最坏情况下检查的元素个数。建立如下递推关系：
+
+\[
+f(n) = \begin{cases}
+1, & \text{if } n = 1 \\
+f(\lfloor n/2 \rfloor) + 1, & \text{if } n > 1
+\end{cases}
+\]
+
+\subsection{展开递推}
+反复展开递推关系：
+\begin{align}
+f(n) &= f(\lfloor n/2 \rfloor) + 1 \\
+&= f(\lfloor \lfloor n/2 \rfloor / 2 \rfloor) + 2 \\
+&= f(\lfloor n/4 \rfloor) + 2 \\
+&= f(\lfloor n/8 \rfloor) + 3 \\
+&\vdots \\
+&= f(\lfloor n/2^i \rfloor) + i
+\end{align}
+
+\paragraph{注}
+可以验证 $\lfloor \lfloor n/2 \rfloor / 2 \rfloor = \lfloor n/4 \rfloor$（有兴趣的读者自证）。
+
+\subsection{求解}
+当 $\lfloor n/2^i \rfloor = 1$ 时，递推停止。此时：
+\[
+2^i = n \quad \Rightarrow \quad i = \log_2 n
+\]
+
+因此：
+\[
+f(n) = f(1) + \log_2 n = 1 + \log_2 n
+\]
+
+即 $f(n) = \lfloor \log_2 n \rfloor + 1$。
+
+\paragraph{最坏情况复杂度}
+\[
+\boxed{f(n) = O(\log n)}
+\]
+
+\section{平均情况复杂度分析}
+
+\subsection{不成功的搜索}
+当列表中不存在目标元素时，二分查找必须将搜索段缩小到无法继续，此时比较次数与最坏情况相同，为 $O(\log n)$。
+
+\subsection{成功的搜索}
+当列表中存在目标元素时，平均查找次数为 $O(\log n)$。
+
+这是因为：
+\begin{itemize}
+  \item 约有 $1/2$ 的概率在第一次比较时找到（在中间位置）
+  \item 约有 $1/4$ 的概率在第二次比较时找到（在子列表中间位置）
+  \item 约有 $1/8$ 的概率在第三次比较时找到
+  \item \ldots
+\end{itemize}
+
+期望比较次数为：
+\[
+\mathbb{E}[f] = 1 \cdot \frac{1}{2} + 2 \cdot \frac{1}{4} + 3 \cdot \frac{1}{8} + \cdots = \sum_{i=1}^{\log_2 n} i \cdot \frac{1}{2^i} = O(\log n)
+\]
+
+\section{C++ 实现}
+
+\subsection{迭代版本}
+\begin{lstlisting}
+#include <iostream>
+using namespace std;
+
+int binarySearchIterative(const int* array, int size, int key) {
+    int low = 0;
+    int high = size - 1;
+    
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        
+        if (array[mid] == key) {
+            return mid;          /* 找到目标 */
+        } else if (array[mid] < key) {
+            low = mid + 1;       /* 在右半部分查找 */
+        } else {
+            high = mid - 1;      /* 在左半部分查找 */
+        }
+    }
+    
+    return -1;                   /* 未找到 */
+}
+\end{lstlisting}
+
+\subsection{递归版本}
+\begin{lstlisting}
+int binarySearchRecursive(const int* array, int low, int high, int key) {
+    if (low > high) {
+        return -1;               /* 未找到 */
+    }
+    
+    int mid = (low + high) / 2;
+    
+    if (array[mid] == key) {
+        return mid;              /* 找到目标 */
+    } else if (array[mid] < key) {
+        return binarySearchRecursive(array, mid + 1, high, key);
+    } else {
+        return binarySearchRecursive(array, low, mid - 1, key);
+    }
+}
+\end{lstlisting}
+
+\subsection{完整示例程序}
+\begin{lstlisting}
+#include <iostream>
+using namespace std;
+
+int binarySearch(const int* array, int size, int key) {
+    int low = 0;
+    int high = size - 1;
+    
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        
+        if (array[mid] == key) {
+            return mid;
+        } else if (array[mid] < key) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    
+    return -1;
+}
+
+int main() {
+    int arr[] = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
+    int size = sizeof(arr) / sizeof(arr[0]);
+    int key = 13;
+    
+    int result = binarySearch(arr, size, key);
+    
+    if (result != -1) {
+        cout << "Element " << key << " found at index "
+             << result << endl;
+    } else {
+        cout << "Element " << key << " not found" << endl;
+    }
+    
+    return 0;
+}
+\end{lstlisting}
+
+\section{与其他搜索算法的比较}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+搜索算法 & 前提条件 & 最坏情况 & 平均情况 \\
+\hline
+线性搜索 & 无 & $O(n)$ & $O(n)$ \\
+\hline
+二分查找 & 有序数组 & $O(\log n)$ & $O(\log n)$ \\
+\hline
+跳跃搜索 & 有序数组 & $O(\sqrt{n})$ & $O(\sqrt{n})$ \\
+\hline
+插值查找 & 均匀分布有序 & $O(n)$ & $O(\log \log n)$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{关键特性}
+
+\subsection{优点}
+\begin{itemize}
+  \item 时间复杂度为 $O(\log n)$，对大规模数据极为高效
+  \item 实现简单，容易理解
+  \item 适用于任何有序数组（无需特殊分布）
+  \item 稳定可靠，无边界情况下的性能退化
+\end{itemize}
+
+\subsection{缺点}
+\begin{itemize}
+  \item 要求输入数据\textbf{有序}
+  \item 对于链表等数据结构不适用（需随机访问）
+  \item 如果数据频繁修改，维护有序性的成本可能较高
+\end{itemize}
+
+\subsection{应用场景}
+\begin{itemize}
+  \item 数据库索引查询
+  \item 系统库中的 \texttt{bsearch()} 函数
+  \item 大型有序数据集的查找
+  \item 编译器符号表查找
+\end{itemize}
+
+\section{总结}
+
+二分查找通过每次消除搜索空间的一半，将查找复杂度从线性的 $O(n)$ 降低到对数的 $O(\log n)$。它是计算机科学中最基础也最重要的算法之一。
+
+\paragraph{关键洞察}
+分治思想（Divide and Conquer）的应用：通过比较一个关键元素，问题规模减半，最终达到指数级的性能改进。
+
+\end{document}

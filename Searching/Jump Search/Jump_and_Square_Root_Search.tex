@@ -1,0 +1,264 @@
+\documentclass[UTF8]{ctexart}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% 代码格式设置
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    backgroundcolor=\color{lightgray!20},
+    frame=single
+}
+
+\title{\textbf{跳跃搜索与平方根搜索 (Jump Search \& Square-Root Search)}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{搜索问题的基本模型}
+
+\subsection{问题定义}
+给定包含 $n$ 个元素的列表 $L$，和目标元素 $X$（由键 $k$ 标识），我们需要：
+\begin{itemize}
+  \item 判断 $X$ 是否在 $L$ 中
+  \item 如果存在，检索该元素
+\end{itemize}
+
+我们假设搜索算法的运行时间主要由\textbf{元素之间的比较操作}次数决定。
+
+\subsection{任何搜索算法的下界}
+
+\paragraph{问题：最坏情况下，任何搜索算法都需要至少 $n$ 次比较吗？}
+
+\paragraph{证明（反证法）}
+假设某搜索算法只进行 $n-1$ 次（或更少）比较。由于列表 $L$ 中有 $n$ 个元素，算法必然避免了与至少一个元素 $L[i]$ 的比较。
+
+构造特殊的输入实例：\textbf{故意将 $X$ 放在位置 $L[i]$}。
+
+当算法处理这个新的列表时，由于从未与 $L[i]$ 进行比较，算法会错误地报告"$X$ 不在 $L$ 中"。因此算法不正确。
+
+\textbf{结论：}没有任何搜索算法的最坏情况比较次数少于 $n$。
+
+\paragraph{关键假设}
+上述论证基于两个假设：
+\begin{enumerate}
+  \item 算法对所有可能的输入都跳过 $L[i]$
+  \item 如果算法跳过 $L[i]$，则无法从 $L[i]$ 中获得任何信息
+\end{enumerate}
+
+\paragraph{突破下界的条件}
+如果数据\textbf{具有特定的结构}（如有序），上述假设就不成立。在这种情况下，我们可能突破 $O(n)$ 的下界。
+
+\section{跳跃搜索（Jump Search）}
+
+\subsection{基本思想}
+线性搜索逐个检查列表中的元素。跳跃搜索采用不同策略：
+
+假设 $L$ 按键值升序排列。我们\textbf{跳过}某些元素进行检查，而不是逐个扫描。
+
+\subsubsection{简单例子}
+比较 $X$ 与 $L[5]$：
+\begin{itemize}
+  \item 若 $L[5] = X$，完成
+  \item 若 $L[5] > X$，我们只需考虑 $L[1], L[2], L[3], L[4]$（前 4 个元素）
+  \item 若 $L[5] < X$，我们知道 $X > L[1], L[2], L[3], L[4]$（跳过了 4 个元素的逐个比较）
+\end{itemize}
+
+这种策略通过\textbf{剪枝（pruning）}——组织数据或计算，使我们能跳过不必要的元素——比线性搜索更高效。
+
+\subsection{跳跃搜索的算法}
+
+\subsubsection{参数与策略}
+选择跳跃步长 $k < n$，进行以下步骤：
+
+\begin{enumerate}
+  \item 比较 $X$ 与位置 $k, 2k, 3k, \ldots$ 的元素，直到找到某个 $i$ 使得：
+  \[
+  X < L[ik] \text{ 或 } X = L[ik]
+  \]
+  
+  \item 若 $X = L[ik]$，搜索成功
+  
+  \item 否则，在子列表 $L[(i-1)k+1], \ldots, L[ik-1]$ 上进行\textbf{线性搜索}
+  
+  \item 若 $X$ 大于最后一个跳跃位置，则在最后的子列表 $L[\lceil n/k \rceil k + 1, \ldots, n]$ 上进行线性搜索
+\end{enumerate}
+
+\subsection{复杂度分析}
+
+\paragraph{最坏情况比较次数}
+设 $m = \lceil n/k \rceil$ 为跳跃停止点的数量。假设 $mk \leq n < (m+1)k$，则：
+\begin{itemize}
+  \item 定位目标段需要最多 $m$ 次比较
+  \item 在段内进行线性搜索需要最多 $k-1$ 次比较
+\end{itemize}
+
+因此，最坏情况下的比较次数为：
+\[
+f(n, k) = \lceil n/k \rceil + k - 1
+\]
+
+\paragraph{数值示例}
+对 $n = 1000$，不同 $k$ 值的比较次数：
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+$k$ & 3 & 10 & 30 & 50 & 100 \\
+\hline
+$f(1000, k)$ & 335 & 109 & 62 & 69 & 110 \\
+\hline
+\end{tabular}
+\end{center}
+
+观察：最优的 $k$ 值约为 $30 \sim 50$。
+
+\section{平方根搜索（Square-Root Search）}
+
+\subsection{最优跳跃步长}
+
+\paragraph{优化问题}
+我们要最小化 $f(n, k) = \lceil n/k \rceil + k - 1$。
+
+对 $f(n, k)$ 关于 $k$ 求导：
+\[
+\frac{d}{dk}\left(\frac{n}{k} + k - 1\right) = -\frac{n}{k^2} + 1
+\]
+
+令导数为零：
+\[
+1 - \frac{n}{k^2} = 0 \quad \Rightarrow \quad k = \sqrt{n}
+\]
+
+\paragraph{最优步长}
+最优的跳跃步长约为 $k \approx \sqrt{n}$。
+
+对于 $n = 1000$：
+\[
+k \approx \sqrt{1000} \approx 31.62 \approx 32
+\]
+
+此时：
+\[
+f(1000, 32) = \lceil 1000/32 \rceil + 32 - 1 = 32 + 31 = 63
+\]
+
+相比线性搜索的最坏情况（1000 次比较），改进显著。
+
+\subsection{平方根搜索的定义与复杂度}
+
+\paragraph{定义}
+采用步长 $k = \sqrt{n}$ 的跳跃搜索称为\textbf{平方根搜索}。
+
+\paragraph{最坏情况复杂度}
+\[
+f\left(n, \sqrt{n}\right) = \frac{n}{\sqrt{n}} + \sqrt{n} - 1 = \sqrt{n} + \sqrt{n} - 1 = 2\sqrt{n} - 1
+\]
+
+因此，平方根搜索的最坏情况时间复杂度为：
+\[
+\boxed{O(\sqrt{n})}
+\]
+
+\subsection{性能对比}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+搜索算法 & 前提条件 & 最坏情况复杂度 & 比较次数（$n=1000$） \\
+\hline
+线性搜索 & 无 & $O(n)$ & 1000 \\
+\hline
+二分查找 & 有序 & $O(\log n)$ & 10 \\
+\hline
+跳跃搜索（最优 $k$） & 有序 & $O(\sqrt{n})$ & 63 \\
+\hline
+平方根搜索 & 有序 & $O(\sqrt{n})$ & 63 \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{C++ 实现}
+
+\subsection{跳跃搜索}
+\begin{lstlisting}
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int jumpSearch(const int* array, int size, int key) {
+    int k = (int)sqrt(size);  // 最优步长为 sqrt(n)
+    int i = k;
+    int prev = 0;
+    
+    // 跳跃阶段：找到目标所在的段
+    while (i < size && array[i] < key) {
+        prev = i;
+        i += k;
+    }
+    
+    // 线性搜索阶段：在段内查找
+    while (array[prev] < key && prev < i && prev < size) {
+        prev++;
+    }
+    
+    // 检查是否找到
+    if (prev < size && array[prev] == key) {
+        return prev;
+    }
+    
+    return -1;  // 未找到
+}
+
+int main() {
+    int arr[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                 10, 11, 12, 13, 14, 15, 20, 25};
+    int size = sizeof(arr) / sizeof(arr[0]);
+    int key = 13;
+    
+    int result = jumpSearch(arr, size, key);
+    
+    if (result != -1) {
+        cout << "Element " << key << " found at index "
+             << result << endl;
+    } else {
+        cout << "Element " << key << " not found" << endl;
+    }
+    
+    return 0;
+}
+\end{lstlisting}
+
+\section{总结}
+
+\subsection{关键洞察}
+\begin{itemize}
+  \item \textbf{无序数据}：任何搜索算法最坏情况下需要 $n$ 次比较（信息论下界）
+  \item \textbf{有序数据}：可以利用结构信息进行剪枝，突破 $O(n)$ 下界
+  \item \textbf{跳跃搜索}：结合跳跃与线性搜索，复杂度为 $O(\sqrt{n})$（当 $k=\sqrt{n}$）
+  \item \textbf{二分搜索}：在有序数据上性能更优，复杂度为 $O(\log n)$
+\end{itemize}
+
+\subsection{何时使用}
+\begin{itemize}
+  \item \textbf{平方根搜索}：当二分查找不适用（如链表），但数据有序时
+  \item \textbf{跳跃搜索}：教学目的，演示如何通过剪枝改进搜索
+  \item \textbf{二分查找}：大多数有序数组的实际应用
+\end{itemize}
+
+\end{document}

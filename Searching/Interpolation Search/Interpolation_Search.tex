@@ -1,0 +1,225 @@
+\documentclass[UTF8]{ctexart}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% 代码格式设置
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    backgroundcolor=\color{lightgray!20},
+    frame=single
+}
+
+\title{\textbf{插值查找 (Interpolation Search)}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{引言：从字典查找谈起}
+当我们从字典中查找单词"algorithm"时，我们不会像二分查找那样从中间开始。相反，我们会从首字母为 a 的地方开始查找，然后根据第二个字母在字母表中的位置，找到相应的位置继续查找，重复这个过程直到找到目标单词。
+
+这个直观的查找方式就是\textbf{插值查找}的思想来源。插值查找利用了数据的分布特性，在均匀分布的数组上可以显著提高查找效率。
+
+\section{算法思想}
+插值查找（Interpolation Search）是二分查找的改良版。它的核心思想是：利用待查找元素与数组端点元素的大小关系，估计目标元素在数组中的可能位置，从而比二分查找更快地定位目标元素。
+
+\subsection{基本原理}
+假设有一个均匀分布的有序数组 $A$，我们要查找元素 $\text{key}$。不同于二分查找每次选择中点，插值查找通过以下公式估计查找位置：
+
+\[
+\text{idx} = l + \frac{\text{key} - A[l]}{A[r] - A[l]} \times (r - l)
+\]
+
+其中：
+\begin{itemize}
+  \item $l$ 和 $r$ 分别代表查找范围的左右索引
+  \item $\text{key}$ 代表待查找的元素
+  \item 公式计算出 $\text{key}$ 占据的相对位置，并将其映射到数组索引上
+\end{itemize}
+
+\subsection{示例说明}
+考虑数组 $A = [1, 2, 3, \ldots, 100]$，长度为 100，相邻元素差为 1，满足均匀分布。
+
+要查找元素 70，计算期望索引：
+\[
+p = \frac{70 - 1}{100 - 1} = \frac{69}{99} \approx 0.697
+\]
+
+期望索引为：
+\[
+\text{idx} = 0 + 0.697 \times 99 = 69
+\]
+
+对应的元素为 $A[69] = 70$，恰好就是我们要找的元素！原本用二分法需要查找 7 次，插值查找只用 1 次。
+
+\section{算法流程}
+插值查找的查找过程如下：
+\begin{enumerate}
+  \item 初始化 $l = 0$，$r = n-1$
+  \item 计算插值位置 $\text{idx}$，并确保 $l \leq \text{idx} \leq r$
+  \item 若 $A[\text{idx}] = \text{key}$，返回 $\text{idx}$（查找成功）
+  \item 若 $A[\text{idx}] < \text{key}$，令 $l = \text{idx} + 1$，重复步骤 2
+  \item 若 $A[\text{idx}] > \text{key}$，令 $r = \text{idx} - 1$，重复步骤 2
+  \item 若 $l > r$，返回 $-1$（查找失败）
+\end{enumerate}
+
+\section{C++ 实现}
+
+\subsection{辅助函数}
+\begin{lstlisting}
+// 计算插值查找的预期位置
+int formula(int l, int r, int key, const int* array) {
+    if (array[r] == array[l]) {
+        return l;  // 避免除以零
+    }
+    double p = (double)(key - array[l]) / (array[r] - array[l]);
+    int n = r - l;
+    int idx = (int)n * p;
+    return idx;
+}
+\end{lstlisting}
+
+\subsection{主函数}
+\begin{lstlisting}
+int interpolationSearch(const int* array, int size, int key) {
+    int l = 0;
+    int r = size - 1;
+    
+    while (l <= r) {
+        // 防止 idx 越界
+        int x = l + formula(l, r, key, array);
+        x = max(l, min(x, r));
+        
+        if (array[x] == key) {
+            return x;
+        } else if (array[x] < key) {
+            l = x + 1;
+        } else {
+            r = x - 1;
+        }
+    }
+    
+    return -1;  // 查找失败
+}
+\end{lstlisting}
+
+\subsection{完整示例程序}
+\begin{lstlisting}
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int formula(int l, int r, int key, const int* array) {
+    if (array[r] == array[l]) {
+        return l;
+    }
+    double p = (double)(key - array[l]) / (array[r] - array[l]);
+    int n = r - l;
+    int idx = (int)(n * p);
+    return idx;
+}
+
+int interpolationSearch(const int* array, int size, int key) {
+    int l = 0;
+    int r = size - 1;
+    
+    while (l <= r) {
+        int x = l + formula(l, r, key, array);
+        x = max(l, min(x, r));
+        
+        if (array[x] == key) {
+            return x;
+        } else if (array[x] < key) {
+            l = x + 1;
+        } else {
+            r = x - 1;
+        }
+    }
+    
+    return -1;
+}
+
+int main() {
+    int arr[] = {1, 2, 3, 4, 5, 10, 20, 30, 40, 50};
+    int size = sizeof(arr) / sizeof(arr[0]);
+    int key = 30;
+    
+    int result = interpolationSearch(arr, size, key);
+    
+    if (result != -1) {
+        cout << "元素 " << key << " found at index "
+             << result << endl;
+    } else {
+        cout << "元素 " << key << " not found" << endl;
+    }
+    
+    return 0;
+}
+\end{lstlisting}
+
+\section{复杂度分析}
+
+\subsection{平均情况}
+当数组呈均匀分布时，插值查找的平均时间复杂度为 $O(\log \log n)$。这比二分查找的 $O(\log n)$ 要优越得多。证明过程相当复杂，感兴趣的读者可参考相关论文。
+
+\subsection{最坏情况}
+若数组分布不均匀，插值查找的复杂度会退化为 $O(n)$。
+
+\subsubsection{极端例子}
+考虑数组 $A = [1, 2, 3, \ldots, n-1, 10^9]$（即前 $n-1$ 个元素为 $1$ 到 $n-1$，最后一个元素为 $10^9$）。要查找元素 $10^9$：
+
+\begin{itemize}
+  \item 第1轮：$p = \frac{10^9 - 1}{10^9 - 1} \approx 1$，索引接近 $n-1$，获得元素，但未找到。
+  \item 后续轮次：搜索范围逐渐缩小，但每次都接近右端，导致需要多次迭代。
+\end{itemize}
+
+对于含有 $n$ 个元素的这样的数组，可能需要 $O(n)$ 次比较。
+
+\subsection{适用场景}
+\begin{itemize}
+  \item \textbf{适用}：数据分布均匀的有序数组，如对数均匀分布的数据
+  \item \textbf{不适用}：分布不均匀的数组，此时二分查找更为稳定
+\end{itemize}
+
+\section{与二分查找的比较}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+特性 & 二分查找 & 插值查找 \\
+\hline
+前提条件 & 有序数组 & 均匀分布的有序数组 \\
+\hline
+平均复杂度 & $O(\log n)$ & $O(\log \log n)$ \\
+\hline
+最坏复杂度 & $O(\log n)$ & $O(n)$ \\
+\hline
+稳定性 & 高 & 取决于分布 \\
+\hline
+实现复杂度 & 低 & 中等 \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{总结}
+插值查找通过估计目标元素的位置，在均匀分布数据上提供了比二分查找更优的性能。然而，它对数据分布的要求较高，当分布不均匀时，性能会显著下降。在实际应用中，应根据数据特性选择合适的查找算法：
+\begin{itemize}
+  \item 数据均匀分布 $\Rightarrow$ 使用插值查找
+  \item 数据分布未知或不均匀 $\Rightarrow$ 使用二分查找
+\end{itemize}
+
+\end{document}
