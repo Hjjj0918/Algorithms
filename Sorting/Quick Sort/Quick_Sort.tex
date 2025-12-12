@@ -1,0 +1,508 @@
+\documentclass[UTF8]{ctexart}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% 代码格式设置
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    backgroundcolor=\color{lightgray!20},
+    frame=single
+}
+
+\title{\textbf{快速排序 (Quick Sort)}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{概述}
+快速排序（Quick Sort）是一种高效的分治排序算法。它的基本思想是借鉴归并排序的分割思想，但避免了归并的代价。通过选择一个枢纽元素（pivot）将数组分成两个部分，使得左部分的所有元素都小于等于右部分的所有元素，然后递归地对两个部分进行排序。虽然最坏情况下时间复杂度为 $O(n^2)$，但在实践中，快速排序通常比其他 $O(n \log n)$ 的排序算法性能更好，是目前应用最广泛的排序算法之一。
+
+\section{算法原理}
+
+\subsection{基本思想}
+快速排序的核心思想是：
+\begin{enumerate}
+    \item \textbf{分割（Partition）}：选择一个枢纽元素，将数组分成两部分，左部分的所有元素 $\leq$ 枢纽，右部分的所有元素 $\geq$ 枢纽
+    \item \textbf{递归排序}：分别对左右两部分进行快速排序
+    \item \textbf{合并}：由于分割后左右两部分已满足大小关系，分别排序后自动有序
+\end{enumerate}
+
+\subsection{与归并排序的比较}
+与归并排序不同，快速排序：
+\begin{itemize}
+    \item 通过分割使得分割后的数据已经满足排序条件
+    \item 无需合并步骤，因此省去了 $O(n)$ 的额外空间
+    \item 是原地排序算法，空间复杂度为 $O(\log n)$（递归栈深度）
+\end{itemize}
+
+\section{分割操作详解}
+
+\subsection{分割算法思想}
+分割操作是快速排序的关键。基本策略如下：
+\begin{enumerate}
+    \item 选择数组的第一个元素作为枢纽 $v$
+    \item 使用两个指针 $i$ 和 $j$，分别从左右两端向中间扫描
+    \item 将 $\leq v$ 的元素移动到左侧，将 $> v$ 的元素移动到右侧
+    \item 最终 $i$ 和 $j$ 相遇，分割完成
+\end{enumerate}
+
+\subsection{C++ 伪代码}
+\begin{verbatim}
+PARTITION (A, p, r) {
+  v = A[p]                      // 第一个元素作为枢纽
+  i = p - 1; 
+  j = r + 1
+  while (TRUE) {
+    do  j--;  while (A[j] > v)  // j 从右向左扫描，找第一个 <= v
+    do  i++;  while (A[i] < v)  // i 从左向右扫描，找第一个 > v
+    if (i < j)                  // 未相遇，交换
+      swap(A[i], A[j])
+    else                        // 已相遇，分割完成
+      return j
+  }
+}
+\end{verbatim}
+
+\subsection{分割示例}
+原数组：$A = [5, 3, 2, 6, 4, 1, 3, 7]$，枢纽 $v = 5$
+
+\begin{verbatim}
+初始状态：
+5 3 2 6 4 1 3 7
+^ 枢纽
+
+扫描过程（i 从左，j 从右）：
+
+第1步：j 扫描到 3 (<5)，i 扫描到 6 (>5)
+5 3 2 6 4 1 3 7
+    i         j
+交换后：
+5 3 2 3 4 1 6 7
+
+第2步：j 扫描到 1 (<5)，i 扫描到 4 (>5)
+5 3 2 3 4 1 6 7
+      i   j
+交换后：
+5 3 2 1 4 3 6 7
+
+第3步：j 扫描到 4 (>=5)，i 扫描到 4
+5 3 2 1 4 3 6 7
+      i j
+i < j 为假，分割完成
+
+最终结果：
+左部分：[3, 3, 2, 1, 4] <= 5
+右部分：[6, 5, 7] > 5
+\end{verbatim}
+
+\section{C++ 实现}
+
+\subsection{分割函数}
+\begin{lstlisting}
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// 分割函数：将数组分成两部分
+// A[p..q]: 所有元素 <= v
+// A[q+1..r]: 所有元素 > v
+// 返回值：q 是分割点
+int partition(vector<int>& arr, int p, int r) {
+    int v = arr[p];  // 选择第一个元素作为枢纽
+    int i = p - 1;
+    int j = r + 1;
+    
+    while (true) {
+        // j 从右向左扫描，找到第一个 <= v 的元素
+        do {
+            j--;
+        } while (arr[j] > v);
+        
+        // i 从左向右扫描，找到第一个 > v 的元素
+        do {
+            i++;
+        } while (arr[i] < v);
+        
+        // 如果 i < j，交换这两个元素
+        if (i < j) {
+            swap(arr[i], arr[j]);
+        } else {
+            // 否则分割完成，返回分割点
+            return j;
+        }
+    }
+}
+
+// Lomuto 分割方案（另一种实现方式）
+// 通常更容易理解，但性能不如 Hoare 分割
+int partitionLomuto(vector<int>& arr, int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+    
+    for (int j = low; j < high; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
+}
+\end{lstlisting}
+
+\subsection{快速排序主函数}
+\begin{lstlisting}
+// 快速排序的递归实现
+// 时间复杂度（平均）：O(n log n)
+// 时间复杂度（最坏）：O(n^2)
+// 空间复杂度：O(log n)（递归栈）
+void quickSort(vector<int>& arr, int p, int r) {
+    if (p < r) {
+        int q = partition(arr, p, r);
+        quickSort(arr, p, q);           // 排序左部分
+        quickSort(arr, q + 1, r);       // 排序右部分
+    }
+}
+
+// 对外接口
+void quickSortWrapper(vector<int>& arr) {
+    if (!arr.empty()) {
+        quickSort(arr, 0, arr.size() - 1);
+    }
+}
+
+// 主程序示例
+int main() {
+    vector<int> arr = {5, 3, 2, 6, 4, 1, 3, 7};
+    
+    cout << "排序前：";
+    for (int num : arr) {
+        cout << num << " ";
+    }
+    cout << endl;
+    
+    quickSortWrapper(arr);
+    
+    cout << "排序后：";
+    for (int num : arr) {
+        cout << num << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{随机化快速排序}
+\begin{lstlisting}
+#include <random>
+
+// 随机选择枢纽，避免最坏情况
+int randomizedPartition(vector<int>& arr, int p, int r) {
+    // 生成 [p, r] 之间的随机数
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(p, r);
+    int randomIdx = dis(gen);
+    
+    // 将随机元素交换到第一个位置
+    swap(arr[p], arr[randomIdx]);
+    
+    // 执行标准分割
+    return partition(arr, p, r);
+}
+
+// 使用随机化分割的快速排序
+void randomizedQuickSort(vector<int>& arr, int p, int r) {
+    if (p < r) {
+        int q = randomizedPartition(arr, p, r);
+        randomizedQuickSort(arr, p, q);
+        randomizedQuickSort(arr, q + 1, r);
+    }
+}
+\end{lstlisting}
+
+\section{复杂度分析}
+
+\subsection{分割操作的复杂度}
+分割操作的时间复杂度为 $O(n)$，其中 $n = r - p + 1$。
+\begin{itemize}
+    \item 指针 $i$ 和 $j$ 各遍历一次数组
+    \item 最多进行 $\approx n/2$ 次交换
+    \item 每次比较和交换都是常数时间
+\end{itemize}
+
+\subsection{最坏情况分析}
+
+\subsubsection{最坏情况的发生}
+最坏情况发生在每次分割都产生极不均衡的分割时，例如数组已经排序。
+
+\textbf{示例：}排序已排序数组 $[1, 2, 3, 4, 5]$
+\begin{itemize}
+    \item 第1次分割：枢纽=1，左部分 0 个元素，右部分 4 个元素，代价 5 次比较
+    \item 第2次分割：枢纽=2，左部分 0 个元素，右部分 3 个元素，代价 4 次比较
+    \item 第3次分割：代价 3 次比较
+    \item 第4次分割：代价 2 次比较
+\end{itemize}
+
+总成本：$5 + 4 + 3 + 2 = 14 = \frac{n(n+1)}{2} - 1$
+
+\textbf{通用公式：}
+$$T(n) = T(n-1) + n = T(n-2) + (n-1) + n = \cdots = \sum_{i=1}^{n} i = \frac{n(n+1)}{2} = \Theta(n^2)$$
+
+\subsection{最好情况分析}
+
+最好情况发生在每次分割都产生两个大小相等的部分时。
+
+设 $T(n)$ 为排序 $n$ 个元素所需的比较次数：
+$$T(n) = 2T(n/2) + n$$
+
+递推求解：
+\begin{align}
+T(n) &= 2T(n/2) + n \\
+&= 2[2T(n/4) + n/2] + n = 4T(n/4) + 2n \\
+&= \cdots \\
+&= 2^{\log_2 n} \cdot T(1) + n \log_2 n \\
+&= n + n \log_2 n \\
+&= \Theta(n \log n)
+\end{align}
+
+\subsection{平均情况分析}
+
+\subsubsection{问题设定}
+假设所有 $n$ 个元素互不相同且随机分布，枢纽可能是第 $1, 2, 3, \ldots, n$ 个元素，每个的概率为 $1/n$。
+
+设 $T(n)$ 为快速排序 $n$ 个元素的平均比较次数。
+
+\subsubsection{递推关系}
+如果枢纽是第 $q$ 小的元素（$1 \leq q \leq n$），则：
+$$T(n) = T(q-1) + T(n-q) + n$$
+
+平均情况下：
+$$T(n) = \frac{1}{n} \sum_{q=1}^{n} [T(q-1) + T(n-q)] + n$$
+
+\subsubsection{求解}
+$$T(n) = \frac{1}{n} \sum_{q=1}^{n} [T(q-1) + T(n-q)] + n = \frac{2}{n} \sum_{i=0}^{n-1} T(i) + n$$
+
+设 $nT(n) = \sum_{i=0}^{n} iT(i)$，则：
+$$(n+1)T(n+1) = 2 \sum_{i=0}^{n} T(i) + (n+1)^2$$
+
+化简可得：$T(n) = O(n \log n)$
+
+\subsection{复杂度总结}
+\begin{itemize}
+    \item \textbf{最坏情况：} $O(n^2)$ \\
+    发生于数组已排序或接近排序，枢纽选择不当时
+    
+    \item \textbf{平均情况：} $O(n \log n)$ \\
+    大多数实际情况下的性能
+    
+    \item \textbf{最好情况：} $O(n \log n)$ \\
+    每次分割均匀时
+    
+    \item \textbf{空间复杂度：} $O(\log n)$ \\
+    递归调用栈的深度
+\end{itemize}
+
+\subsection{为什么快速排序在实践中最快？}
+虽然快速排序和堆排序都是平均 $O(n \log n)$，但快速排序通常更快，因为：
+\begin{itemize}
+    \item 数据访问本地性好，缓存命中率高
+    \item 常数因子小
+    \item 使用了更少的比较和移动操作
+    \item 对现代 CPU 的优化更友好
+\end{itemize}
+
+\section{枢纽元素的选择}
+
+\subsection{问题与影响}
+枢纽的选择对快速排序的性能有重大影响。选择不当可能导致最坏情况 $O(n^2)$。
+
+\subsection{选择策略}
+
+\subsubsection{策略1：选择第一个元素（最简单）}
+\begin{itemize}
+    \item 优点：实现简单
+    \item 缺点：对于已排序或接近排序的数据，性能很差
+\end{itemize}
+
+\subsubsection{策略2：随机选择}
+\begin{itemize}
+    \item 优点：避免最坏情况，期望性能为 $O(n \log n)$
+    \item 缺点：需要随机数生成器，略有性能开销
+    \item 推荐：在处理不可信数据时使用
+\end{itemize}
+
+\subsubsection{策略3：三数取中（Median-of-three）}
+从数组的三个位置（开始、中间、结束）选择元素，取其中位数：
+\begin{lstlisting}
+int medianOfThree(vector<int>& arr, int low, int mid, int high) {
+    if (arr[low] > arr[mid]) swap(arr[low], arr[mid]);
+    if (arr[mid] > arr[high]) swap(arr[mid], arr[high]);
+    if (arr[low] > arr[mid]) swap(arr[low], arr[mid]);
+    return mid;
+}
+\end{lstlisting}
+\begin{itemize}
+    \item 优点：避免在排序数据上的最坏情况
+    \item 缺点：增加了常数开销
+\end{itemize}
+
+\section{快速选择算法 (QuickSelect)}
+
+\subsection{问题}
+在未排序的数组中找出第 $k$ 小的元素。
+
+\subsection{思想}
+借用快速排序的分割思想，但只递归处理包含第 $k$ 小元素的那一部分。
+
+\subsection{C++ 实现}
+\begin{lstlisting}
+// 快速选择算法
+// 返回数组中第 k 小的元素（0-indexed）
+int quickSelect(vector<int>& arr, int low, int high, int k) {
+    if (low == high) {
+        return arr[low];
+    }
+    
+    int q = partition(arr, low, high);
+    
+    // 如果 k 在左部分
+    if (k <= q) {
+        return quickSelect(arr, low, q, k);
+    }
+    // 如果 k 在右部分
+    else {
+        return quickSelect(arr, q + 1, high, k);
+    }
+}
+
+// 使用示例
+int main() {
+    vector<int> arr = {5, 3, 2, 6, 4, 1, 3, 7};
+    int k = 5;  // 找第 5 小的元素（0-indexed）
+    
+    int kthSmallest = quickSelect(arr, 0, arr.size() - 1, k);
+    cout << "第 " << (k+1) << " 小的元素是：" << kthSmallest << endl;
+    
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{复杂度}
+\begin{itemize}
+    \item \textbf{平均情况：} $O(n)$ \\
+    只需递归处理一部分数据
+    
+    \item \textbf{最坏情况：} $O(n^2)$ \\
+    枢纽选择不当时
+\end{itemize}
+
+\section{排序的下界}
+
+\subsection{问题}
+任何基于比较的排序算法至少需要多少次比较？
+
+\subsection{决策树模型}
+可以用二叉决策树表示一个排序算法：
+\begin{itemize}
+    \item \textbf{节点}：表示比较 $A[i]$ 和 $A[j]$
+    \item \textbf{边}：表示比较的结果（$<$、$=$、$>$）
+    \item \textbf{叶子}：表示最终的排序结果（某个排列）
+\end{itemize}
+
+\subsection{下界证明}
+
+\subsubsection{关键观察}
+对 $n$ 个元素的排序：
+\begin{itemize}
+    \item 共有 $n!$ 种可能的初始排列
+    \item 每个排列对应决策树的一个叶子
+    \item 因此决策树至少有 $n!$ 个叶子
+\end{itemize}
+
+\subsubsection{二叉树的性质}
+\textbf{引理：}高度为 $h$ 的二叉树最多有 $2^h$ 个叶子。
+
+\textbf{证明：}由归纳法，$h=0$ 时有 1 个叶子；$h=k$ 时递推。
+
+\subsubsection{推导下界}
+如果一个排序算法的最坏情况比较次数为 $T(n)$，则对应决策树的高度为 $T(n)$。
+
+由于至少需要 $n!$ 个叶子：
+$$2^{T(n)} \geq n!$$
+
+两边取对数：
+$$T(n) \geq \log_2(n!)$$
+
+\subsubsection{计算 $\log_2(n!)$ 的下界}
+$$n! = 1 \cdot 2 \cdot 3 \cdots n$$
+
+对于 $1 \leq k \leq n$，有 $k \leq n$，因此：
+$$n! = \prod_{k=1}^{n} k \leq n^n$$
+
+$$n! = \prod_{k=1}^{n} k \geq \prod_{k=n/2}^{n} k \geq (n/2)^{n/2}$$
+
+取对数：
+$$\log_2(n!) \geq \frac{n}{2} \log_2(n/2) = \frac{n}{2}(\log_2 n - 1) = \frac{n \log_2 n}{2} - \frac{n}{2}$$
+
+更精确地（使用 Stirling 公式）：
+$$\log_2(n!) = \Theta(n \log_2 n)$$
+
+\subsection{排序下界定理}
+\textbf{定理：}任何基于比较的排序算法在最坏情况下至少需要 $\Theta(n \log_2 n)$ 次比较。
+
+\textbf{推论：}
+\begin{itemize}
+    \item 归并排序、堆排序达到了这个下界，是最优的
+    \item 快速排序的平均情况也达到了这个下界
+    \item 不存在更好的基于比较的排序算法
+\end{itemize}
+
+\subsection{平均情况下界}
+决策树中任意叶子的平均深度也是 $\Theta(n \log_2 n)$，因此任何比较型排序算法的平均情况复杂度下界为 $\Theta(n \log_2 n)$。
+
+\section{特点与应用}
+
+\subsection{优点}
+\begin{itemize}
+    \item 平均时间复杂度为 $O(n \log n)$，且常数因子小
+    \item 原地排序，空间复杂度只有 $O(\log n)$
+    \item 在实践中性能优于大多数其他排序算法
+    \item 可以通过不同的枢纽选择策略进行优化
+    \item 适合大规模数据的排序
+\end{itemize}
+
+\subsection{缺点}
+\begin{itemize}
+    \item 最坏情况时间复杂度为 $O(n^2)$
+    \item 不是稳定的排序算法（相等元素的相对顺序可能改变）
+    \item 对于已排序或接近排序的数据，性能较差（除非使用好的枢纽选择策略）
+    \item 枢纽选择不当容易陷入最坏情况
+\end{itemize}
+
+\subsection{应用场景}
+\begin{itemize}
+    \item 大多数编程语言和库的默认排序算法（例如 C++ 的 std::sort）
+    \item 需要原地排序的场景（空间受限）
+    \item 大规模数据排序
+    \item 需要快速响应的实时系统
+\end{itemize}
+
+\end{document}
