@@ -1,0 +1,432 @@
+\documentclass[UTF8]{ctexart}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+
+\title{二叉搜索树 (Binary Search Tree)}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{二叉树基础}
+
+\subsection{二叉树定义}
+二叉树是一种树形数据结构，其中每个节点最多有两个子节点，通常称为左子节点和右子节点。
+
+二叉树的重要性质：
+\begin{itemize}
+    \item 一棵深度为 $k$ 的二叉树最多有 $2^k - 1$ 个节点
+    \item 一棵有 $n$ 个节点的二叉树的高度至少为 $\log_2(n+1)$
+    \item 满二叉树：深度为 $k$ 且有 $2^k - 1$ 个节点
+    \item 完全二叉树：除最后一层外，其他层均满，最后一层从左到右连续
+\end{itemize}
+
+\subsection{二叉树的三种遍历方式}
+
+\subsubsection{1. 前序遍历 (Pre-order Traversal)}
+访问顺序：根节点 → 左子树 → 右子树
+
+\begin{algorithm}
+\caption{前序遍历伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} PreOrder(node)
+\IF{node is not null}
+    \STATE visit(node)  \COMMENT{访问当前节点}
+    \STATE PreOrder(node.left)  \COMMENT{遍历左子树}
+    \STATE PreOrder(node.right)  \COMMENT{遍历右子树}
+\ENDIF
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{2. 中序遍历 (In-order Traversal)}
+访问顺序：左子树 → 根节点 → 右子树
+
+\begin{algorithm}
+\caption{中序遍历伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} InOrder(node)
+\IF{node is not null}
+    \STATE InOrder(node.left)  \COMMENT{遍历左子树}
+    \STATE visit(node)  \COMMENT{访问当前节点}
+    \STATE InOrder(node.right)  \COMMENT{遍历右子树}
+\ENDIF
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{3. 后序遍历 (Post-order Traversal)}
+访问顺序：左子树 → 右子树 → 根节点
+
+\begin{algorithm}
+\caption{后序遍历伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} PostOrder(node)
+\IF{node is not null}
+    \STATE PostOrder(node.left)  \COMMENT{遍历左子树}
+    \STATE PostOrder(node.right)  \COMMENT{遍历右子树}
+    \STATE visit(node)  \COMMENT{访问当前节点}
+\ENDIF
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\section{二叉搜索树 (BST)}
+
+\subsection{定义}
+二叉搜索树是一种特殊的二叉树，满足以下性质：
+\begin{itemize}
+    \item 对于任意节点，其左子树中所有节点的值都小于该节点的值
+    \item 对于任意节点，其右子树中所有节点的值都大于该节点的值
+    \item 左右子树也都是二叉搜索树
+\end{itemize}
+
+\subsection{查找操作}
+
+\begin{algorithm}
+\caption{BST查找操作伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} Search(root, key)
+\STATE node $\leftarrow$ root
+\WHILE{node is not null}
+    \IF{node.value == key}
+        \STATE \textbf{return} node  \COMMENT{找到目标}
+    \ELSIF{key < node.value}
+        \STATE node $\leftarrow$ node.left  \COMMENT{在左子树中查找}
+    \ELSE
+        \STATE node $\leftarrow$ node.right  \COMMENT{在右子树中查找}
+    \ENDIF
+\ENDWHILE
+\STATE \textbf{return} null  \COMMENT{未找到}
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+时间复杂度：平均情况 $O(\log n)$，最坏情况 $O(n)$
+
+\subsection{插入操作}
+
+\begin{algorithm}
+\caption{BST插入操作伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} Insert(root, value)
+\IF{root is null}
+    \STATE root $\leftarrow$ new Node(value)
+    \STATE \textbf{return} root
+\ENDIF
+\IF{value < root.value}
+    \STATE root.left $\leftarrow$ Insert(root.left, value)
+\ELSIF{value > root.value}
+    \STATE root.right $\leftarrow$ Insert(root.right, value)
+\ELSE
+    \STATE \textbf{return} root  \COMMENT{重复值不插入}
+\ENDIF
+\STATE \textbf{return} root
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{删除操作}
+
+删除操作分为三种情况：
+
+\begin{algorithm}
+\caption{BST删除操作伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} Delete(root, value)
+\IF{root is null}
+    \STATE \textbf{return} null
+\ENDIF
+\IF{value < root.value}
+    \STATE root.left $\leftarrow$ Delete(root.left, value)
+\ELSIF{value > root.value}
+    \STATE root.right $\leftarrow$ Delete(root.right, value)
+\ELSE
+    \COMMENT{找到要删除的节点}
+    \IF{root.left is null}
+        \STATE \textbf{return} root.right  \COMMENT{情况1：无左子树}
+    \ELSIF{root.right is null}
+        \STATE \textbf{return} root.left  \COMMENT{情况2：无右子树}
+    \ELSE
+        \COMMENT{情况3：有两个子树}
+        \STATE minNode $\leftarrow$ FindMin(root.right)  \COMMENT{找右子树最小值}
+        \STATE root.value $\leftarrow$ minNode.value  \COMMENT{用最小值替换}
+        \STATE root.right $\leftarrow$ Delete(root.right, minNode.value)
+    \ENDIF
+\ENDIF
+\STATE \textbf{return} root
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{辅助函数：寻找最小值}
+
+\begin{algorithm}
+\caption{寻找最小值节点伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} FindMin(root)
+\IF{root is null}
+    \STATE \textbf{return} null
+\ENDIF
+\WHILE{root.left is not null}
+    \STATE root $\leftarrow$ root.left
+\ENDWHILE
+\STATE \textbf{return} root
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\section{BST应用}
+
+\subsection{1. 判断一个二叉树是否为二叉搜索树}
+
+该问题的关键是确保每个节点的值在有效范围内。
+
+\subsubsection{1.1 方法一：范围检查}
+
+\begin{algorithm}
+\caption{验证BST伪代码（范围检查）}
+\begin{algorithmic}
+\STATE \textbf{procedure} IsValidBST(root, minVal, maxVal)
+\IF{root is null}
+    \STATE \textbf{return} true
+\ENDIF
+\IF{root.value $\leq$ minVal OR root.value $\geq$ maxVal}
+    \STATE \textbf{return} false  \COMMENT{违反BST性质}
+\ENDIF
+\STATE leftValid $\leftarrow$ IsValidBST(root.left, minVal, root.value)
+\STATE rightValid $\leftarrow$ IsValidBST(root.right, root.value, maxVal)
+\STATE \textbf{return} leftValid AND rightValid
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+初始调用：\texttt{IsValidBST(root, $-\infty$, $+\infty$)}
+
+时间复杂度：$O(n)$，其中 $n$ 为节点数
+
+\subsubsection{1.2 方法二：中序遍历验证}
+
+在BST上进行中序遍历应该得到递增序列。
+
+\begin{algorithm}
+\caption{验证BST伪代码（中序遍历）}
+\begin{algorithmic}
+\STATE \textbf{procedure} IsValidBST(root)
+\STATE prevVal $\leftarrow$ $-\infty$
+\STATE valid $\leftarrow$ InOrderValidate(root, prevVal)
+\STATE \textbf{return} valid
+\STATE \textbf{end procedure}
+
+\STATE \textbf{procedure} InOrderValidate(node, prevVal)
+\IF{node is null}
+    \STATE \textbf{return} true
+\ENDIF
+\STATE leftValid $\leftarrow$ InOrderValidate(node.left, prevVal)
+\IF{NOT leftValid}
+    \STATE \textbf{return} false
+\ENDIF
+\IF{node.value $\leq$ prevVal}
+    \STATE \textbf{return} false  \COMMENT{不满足递增条件}
+\ENDIF
+\STATE prevVal $\leftarrow$ node.value
+\STATE rightValid $\leftarrow$ InOrderValidate(node.right, prevVal)
+\STATE \textbf{return} rightValid
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+时间复杂度：$O(n)$，其中 $n$ 为节点数
+
+\subsection{2. BST的最近公共祖先}
+
+\subsubsection{2.1 伪代码实现}
+
+\begin{algorithm}
+\caption{找两个节点的最近公共祖先伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} FindLCA(root, p, q)
+\IF{root is null}
+    \STATE \textbf{return} null
+\ENDIF
+\IF{p.value < root.value AND q.value < root.value}
+    \STATE \textbf{return} FindLCA(root.left, p, q)  \COMMENT{都在左子树}
+\ELSIF{p.value > root.value AND q.value > root.value}
+    \STATE \textbf{return} FindLCA(root.right, p, q)  \COMMENT{都在右子树}
+\ELSE
+    \STATE \textbf{return} root  \COMMENT{分别在两侧或为根节点}
+\ENDIF
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+时间复杂度：$O(\log n)$ 平均情况，$O(n)$ 最坏情况
+
+\subsection{3. 找BST中第K小的元素}
+
+\subsubsection{3.1 伪代码实现}
+
+\begin{algorithm}
+\caption{找第K小元素伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} KthSmallest(root, k)
+\STATE stack $\leftarrow$ empty stack
+\STATE count $\leftarrow$ 0
+\STATE node $\leftarrow$ root
+\WHILE{stack is not empty OR node is not null}
+    \WHILE{node is not null}
+        \STATE stack.push(node)
+        \STATE node $\leftarrow$ node.left
+    \ENDWHILE
+    \STATE node $\leftarrow$ stack.pop()
+    \STATE count $\leftarrow$ count + 1
+    \IF{count == k}
+        \STATE \textbf{return} node.value
+    \ENDIF
+    \STATE node $\leftarrow$ node.right
+\ENDWHILE
+\STATE \textbf{return} null
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+时间复杂度：$O(k)$（最坏情况 $O(n)$）
+
+\section{BST 例题及伪代码}
+
+\subsection{例题1：求BST所有元素的和}
+
+\textbf{问题：}给定一个二叉搜索树，求树中所有节点值的和。
+
+\textbf{思路：}递归遍历整棵树，将每个节点的值加起来。
+
+\begin{algorithm}
+\caption{求BST所有元素的和}
+\begin{algorithmic}
+\STATE \textbf{procedure} SumOfTree(root)
+\IF{root is null}
+    \STATE \textbf{return} 0
+\ENDIF
+\STATE leftSum $\leftarrow$ SumOfTree(root.left)  \COMMENT{左子树的和}
+\STATE rightSum $\leftarrow$ SumOfTree(root.right)  \COMMENT{右子树的和}
+\STATE \textbf{return} root.value + leftSum + rightSum  \COMMENT{当前节点加左右子树}
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{示例：}对于树
+\begin{verbatim}
+        5
+       / \
+      3   7
+     / \   \
+    2   4   8
+\end{verbatim}
+SumOfTree 返回 $5+3+7+2+4+8=29$。
+
+时间复杂度：$O(n)$（访问每个节点一次）；空间复杂度：$O(h)$（递归栈深度）
+
+\subsection{例题2：求范围[a, b]内元素的和}
+
+\textbf{问题：}给定一个二叉搜索树和两个整数 $a, b$（$a \leq b$），求树中所有值在 $[a, b]$ 范围内的节点值之和。
+
+\textbf{思路：}利用BST的性质，只遍历值在范围内或可能在范围内的子树，避免遍历无关分支。
+
+\begin{algorithm}
+\caption{求范围[a,b]内元素的和}
+\begin{algorithmic}
+\STATE \textbf{procedure} RangeSumBST(root, a, b)
+\IF{root is null}
+    \STATE \textbf{return} 0
+\ENDIF
+\IF{root.value < a}
+    \COMMENT{当前节点值小于a，左子树更小，只需查看右子树}
+    \STATE \textbf{return} RangeSumBST(root.right, a, b)
+\ELSIF{root.value > b}
+    \COMMENT{当前节点值大于b，右子树更大，只需查看左子树}
+    \STATE \textbf{return} RangeSumBST(root.left, a, b)
+\ELSE
+    \COMMENT{当前节点在范围[a,b]内}
+    \STATE leftSum $\leftarrow$ RangeSumBST(root.left, a, b)
+    \STATE rightSum $\leftarrow$ RangeSumBST(root.right, a, b)
+    \STATE \textbf{return} root.value + leftSum + rightSum
+\ENDIF
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{示例：}对于上面的树，求范围 $[3,7]$ 内的和：
+\begin{itemize}
+    \item 5 在范围内，加入结果
+    \item 对 3 查询 $[3,7]$：3 在范围内，加入结果；4 在范围内，加入结果；2 不在范围内，跳过
+    \item 对 7 查询 $[3,7]$：7 在范围内，加入结果；8 不在范围内，跳过
+    \item 最终结果：$5+3+4+7=19$
+\end{itemize}
+
+时间复杂度：$O(n)$ 最坏情况（当范围覆盖全树）；平均情况下更优；空间复杂度：$O(h)$
+
+\subsection{例题3：求BST的最小差值}
+
+\textbf{问题：}给定一个二叉搜索树，求树中任意两个不同节点值的差的最小值。
+
+\textbf{思路：}在BST上做中序遍历得到递增序列，最小差值必定出现在相邻元素之间。
+
+\begin{algorithm}
+\caption{求BST的最小差值}
+\begin{algorithmic}
+\STATE \textbf{procedure} MinDifferenceBST(root)
+\STATE prev $\leftarrow$ null
+\STATE minDiff $\leftarrow$ $\infty$
+\STATE InOrderTraversal(root, prev, minDiff)
+\STATE \textbf{return} minDiff
+\STATE \textbf{end procedure}
+
+\STATE \textbf{procedure} InOrderTraversal(node, prev, minDiff)
+\IF{node is null}
+    \STATE \textbf{return}
+\ENDIF
+\STATE InOrderTraversal(node.left, prev, minDiff)  \COMMENT{遍历左子树}
+\IF{prev is not null}
+    \STATE minDiff $\leftarrow$ min(minDiff, node.value - prev)  \COMMENT{更新最小差值}
+\ENDIF
+\STATE prev $\leftarrow$ node.value  \COMMENT{更新前驱节点}
+\STATE InOrderTraversal(node.right, prev, minDiff)  \COMMENT{遍历右子树}
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{示例：}对于树 2-1-3，中序遍历为 1, 2, 3，差值为 $\{2-1=1, 3-2=1\}$，最小差值为 1。
+
+时间复杂度：$O(n)$；空间复杂度：$O(h)$
+
+\section{BST的复杂度分析}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{操作} & \textbf{平均时间复杂度} & \textbf{最坏时间复杂度} \\
+\hline
+查找 & $O(\log n)$ & $O(n)$ \\
+\hline
+插入 & $O(\log n)$ & $O(n)$ \\
+\hline
+删除 & $O(\log n)$ & $O(n)$ \\
+\hline
+遍历 & $O(n)$ & $O(n)$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{注：}最坏情况发生在树退化为链表时（例如，顺序插入有序数据）。
+
+\end{document}

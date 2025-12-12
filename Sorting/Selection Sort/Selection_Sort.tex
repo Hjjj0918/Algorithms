@@ -1,0 +1,190 @@
+\documentclass[UTF8]{ctexart}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+
+% 代码格式设置
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    backgroundcolor=\color{lightgray!20},
+    frame=single
+}
+
+\title{\textbf{选择排序 (Selection Sort)}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{选择排序的基本思想}
+
+选择排序是一种简单的排序算法，其核心思想是：
+
+\begin{itemize}
+    \item 在每一轮迭代中，找出未排序部分的最大元素
+    \item 将该最大元素放到正确的最终位置（已排序部分的开始）
+    \item 重复此过程，直到整个数组排序完成
+\end{itemize}
+
+与冒泡排序不同，选择排序在找到一个元素的正确位置后，不会再移动它，这是其主要特性。
+
+\section{算法步骤示例}
+
+以数组 $[34, 8, 64, 51, 32, 21]$ 为例，演示选择排序的过程：
+
+\begin{enumerate}
+    \item \textbf{初始数组：} $[34, 8, 64, 51, 32, 21]$
+    \item \textbf{第1轮：} 找最大值 64，放在末尾
+        \begin{center}
+            $[34, 8, 21, 51, 32] \mid 64$
+        \end{center}
+    \item \textbf{第2轮：} 找最大值 51，放在倒数第二位
+        \begin{center}
+            $[34, 8, 21, 32] \mid 51, 64$
+        \end{center}
+    \item \textbf{第3轮：} 找最大值 34，放在倒数第三位
+        \begin{center}
+            $[32, 8, 21] \mid 34, 51, 64$
+        \end{center}
+    \item \textbf{第4轮：} 找最大值 32，放在倒数第四位
+        \begin{center}
+            $[21, 8] \mid 32, 34, 51, 64$
+        \end{center}
+    \item \textbf{第5轮：} 找最大值 21，放在倒数第五位
+        \begin{center}
+            $[8] \mid 21, 32, 34, 51, 64$
+        \end{center}
+    \item \textbf{最终结果：} $[8, 21, 32, 34, 51, 64]$
+\end{enumerate}
+
+\textbf{关键观察：}在第 $k$ 次迭代中，需要在 $n - k + 1$ 个元素的列表中找到最大值，这需要 $n - k$ 次比较。
+
+\section{伪代码}
+
+\begin{algorithm}
+\caption{选择排序伪代码}
+\begin{algorithmic}
+\STATE \textbf{procedure} SelectionSort(A)
+\STATE $n \leftarrow$ length of A
+\FOR{$i = n$ \textbf{downto} $2$}
+    \STATE $\text{max} \leftarrow i$  \COMMENT{假设第i个位置的元素最大}
+    \FOR{$j = 1$ \textbf{to} $i - 1$}
+        \IF{A[$j$] > A[max]}
+            \STATE $\text{max} \leftarrow j$  \COMMENT{找到更大的元素}
+        \ENDIF
+    \ENDFOR
+    \STATE swap(A[$i$], A[max])  \COMMENT{交换最大元素到第i个位置}
+\ENDFOR
+\STATE \textbf{end procedure}
+\end{algorithmic}
+\end{algorithm}
+
+\section{时间复杂度分析}
+
+\subsection{比较次数统计}
+
+选择排序中的比较总数为：
+
+\begin{equation}
+\sum_{i=2}^{n} (i-1) = 1 + 2 + 3 + \cdots + (n-1) = \frac{n(n-1)}{2} = \Theta(n^2)
+\end{equation}
+
+\subsection{复杂度总结}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{复杂度指标} & \textbf{时间复杂度} & \textbf{说明} \\
+\hline
+最坏情况 & $\Theta(n^2)$ & 任何输入顺序都需要相同的比较次数 \\
+\hline
+最好情况 & $\Theta(n^2)$ & 不依赖于输入的初始顺序 \\
+\hline
+平均情况 & $\Theta(n^2)$ & 比较次数固定 \\
+\hline
+空间复杂度 & $O(1)$ & 只需要常数额外空间（原地排序） \\
+\hline
+交换次数 & $O(n)$ & 最多 $n-1$ 次交换 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{选择排序与插入排序的比较}
+
+\subsection{选择排序的特性}
+
+\begin{itemize}
+    \item \textbf{位置确定性：}一旦找到一个元素的正确位置，该元素就不会再被移动
+    \item \textbf{固定复杂度：}无论输入数据如何排序，都需要 $\Theta(n^2)$ 的比较次数
+    \item \textbf{交换次数少：}最多进行 $n-1$ 次交换，比冒泡排序要少
+    \item \textbf{不稳定：}相等元素的相对顺序可能改变
+\end{itemize}
+
+\subsection{插入排序的特性}
+
+\begin{itemize}
+    \item \textbf{自适应性：}从部分有序的输入中受益。若输入已排序，插入排序只需 $O(n)$ 时间
+    \item \textbf{在线排序：}可以边接收数据边排序，无需等待所有数据都可用
+    \item \textbf{稳定性：}相等元素的相对顺序保持不变
+    \item \textbf{比较灵活：}在小数据集和几乎有序的数据上表现较好
+\end{itemize}
+
+\subsection{适用场景}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{场景} & \textbf{选择排序} & \textbf{插入排序} \\
+\hline
+完全无序的数据 & 较好 & 较好 \\
+\hline
+部分有序的数据 & 不好（仍需 $O(n^2)$） & 很好（可能 $O(n)$） \\
+\hline
+已排序的数据 & 不好（仍需 $O(n^2)$） & 很好（只需 $O(n)$） \\
+\hline
+实时处理数据 & 不好 & 很好 \\
+\hline
+稳定性要求 & 不适用 & 适用 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{算法优缺点总结}
+
+\subsection{优点}
+
+\begin{itemize}
+    \item 算法简单，易于理解和实现
+    \item 不需要额外的内存空间（原地排序）
+    \item 交换次数较少，对内存写操作敏感的场景较好
+    \item 比较次数固定，可预测性强
+\end{itemize}
+
+\subsection{缺点}
+
+\begin{itemize}
+    \item 时间复杂度为 $\Theta(n^2)$，对于大规模数据不适合
+    \item 不是稳定排序
+    \item 不能从部分有序的输入中获益
+    \item 不能进行在线排序
+\end{itemize}
+
+\end{document}
